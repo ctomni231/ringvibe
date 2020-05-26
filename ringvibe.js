@@ -1,6 +1,7 @@
 import { input, state, loop, view } from "./engine/screenstate.js"
 import * as utils from "./engine/bc/utils.js"
 import * as music from "./engine/js/music.js"
+import * as jslix from "./engine/js/jslix.js"
 
 export const name = "RINGVIBE"
 let action = false
@@ -12,8 +13,9 @@ let i = 0
 let j = 0
 
 let rotate = 0
+let save = 0
+let level = 0
 let rwidth = 15
-let val = 2
 let rings = []
 let rx = []
 let ry = []
@@ -36,57 +38,75 @@ let windcount = 0
 
 export function init(){
 
-  // [0]Score, [1]Time, [2]Level, [3]Timebar, [4]Scoreholder, [5]TimeHolder
-  ra.push(0, 500, 0, 1000, 0, 0)
-  // [6]movex, [7]movey, [8]windx, [9]windy, [10]spawn, [11]windcount
-  ra.push(0, 0, 0, 0, 0, 0)
-  // [12]link, [13]delay, [14]diff
-  ra.push(0, 500, 0)
-
-
-  //music.addSong("fallen.mp3")
-  //music.addSong("sky.mp3")
+  ra.push(-1)
   music.addSong("maptick.wav")
+  jslix.addImage("rtitle.png")
 
-  for(i = 0; i < 7; i++){
-    rings.push(i)
-    rx.push(i*60)
-    ry.push(i*40+75)
-  }
 }
 
 export function update(){
 
-  // Rotate the ring
-  rotate = rotate%360
-  rotate += (ra[6] + ra[7])/2 == 0 ?
-            (ra[6] + ra[7] < 0 ? -1 : 1) :
-            (ra[6] + ra[7]);
-
   // This handles the action presses
   if (input.ACTION) {
-    //if(!music.isMusicPlaying())
-      //music.playMusic("fallen.mp3")
     action = true
     atrig += 1;
   }else if(action){
-    //music.playSong("fallen.mp3")
-
     action = false
     atrig = 0;
   }
 
   // This handles the cancel presses
   if (input.CANCEL) {
-    //if(music.isMusicPlaying())
-    //  music.stopMusic()
-    //music.stopAllSongs()
     cancel = true
     ctrig += 1;
   }else if(cancel){
     ctrig = 0
     cancel = false
   }
+
+  // What to do when the game just starts
+  if(ra[0] <= 0){
+    if(ra[0] < 0){
+      for(i = 0; i < rings.length; i++){
+        if(rings[i] > 0)
+          rings[i] *= -1
+        if(rings[i] != 0)
+          createExp(rings[i], rx[i], ry[i])
+      }
+
+      // Reset all the ring actions
+      ra = []
+      // [0]Score, [1]Time, [2]Level, [3]Timebar, [4]Scoreholder, [5]TimeHolder
+      ra.push(0, 500, 0, 1000, 0, 0)
+      // [6]movex, [7]movey, [8]windx, [9]windy, [10]spawn, [11]windcount
+      ra.push(0, 0, 0, 0, 0, 0)
+      // [12]link, [13]delay, [14]diff, [15]drain,
+      ra.push(0, 500, 0, 0)
+
+      // Reset all the rings
+      rings = []
+      rx = []
+      ry = []
+
+      for(i = 0; i < 7; i++){
+        createRing(i, i*60, i*40+75)
+      }
+    }
+
+    rx[1] = rx[4] = (view.sizex/2)
+    rx[0] = rx[5] = (view.sizex/3)
+    rx[2] = rx[3] = (2*view.sizex/3)
+    ry[0] = ry[2] = (view.sizey/3)
+    ry[3] = ry[5] = (2*view.sizey/3)
+    ry[1] = (view.sizey/5)
+    ry[4] = (4*view.sizey/5)
+  }
+
+  // Rotate the ring
+  rotate = rotate%360
+  rotate += (ra[6] + ra[7])/2 == 0 ?
+            (ra[6] + ra[7] < 0 ? -1 : 1) :
+            (ra[6] + ra[7]);
 
   // Ring spawn sequence
   if(ra[0] > 0){
@@ -115,13 +135,16 @@ export function update(){
       if(ra[7] != ra[9])
         ra[7] += (ra[7] < ra[9]) ? 1 : -1
       if(ra[13] < ra[1]){
-        ra[1] -= ra[14]
+        //ra[15] += 1
+        ra[15] = ra[2]+1
       }
       ra[13] -= ra[14]
     }
     ra[13] -= ra[12]
     if(ra[13] < ra[1]){
-      ra[1] -= ra[12]
+      ra[1] -= ra[15]
+    }else{
+      ra[15] = 0
     }
     if(ra[11] > 1000){
 	     ra[8] = ra[9] = 0;
@@ -173,7 +196,7 @@ export function update(){
 
         ra[13] = ra[1]
 
-        ra[4] = ra[5] = ra[12] = 0
+        ra[4] = ra[5] = ra[12] = ra[15] = 0
         createExp(rings[i], rx[i], ry[i])
         rings[i] = 0;
       }
@@ -190,23 +213,20 @@ export function update(){
 
         ra[13] = ra[1]
 
-        ra[4] = ra[5] = ra[12] = 0
+        ra[4] = ra[5] = ra[12] = ra[15] = 0
         createExp(rings[i], rx[i], ry[i])
         rings[i] = 0;
       }
     }
   }
 
-
-  // This allows for lingering action presses
-  //if(atrig){
-    //atrig = false
-  //}
-
-  // This allows for lingering control presses
-  //if(ctrig){
-    //ctrig = false
-  //}
+  // Lose sequence
+  if(ra[1] < 0){
+    save = ra[0]
+    ra[0] = -1
+    if(ra[2] > level)
+      level = ra[2]
+  }
 }
 
 function createRing(num, x, y){
@@ -279,6 +299,26 @@ export function render(canvas, ctx){
     }
   }
 
+  // Level Color
+  let tmpstr = '#'
+  tmpstr += ([1,2,3,0,6,-1,-2,-3].includes(6-ra[2]%6)) ? "FF" : "00";
+  tmpstr += ([2,-2].includes(6-ra[2]%6)) ? "A5" : ([3,4,-3,-4].includes(6-ra[2]%6)) ? "FF" : "00";
+  tmpstr += ([-5,5,0,6].includes(6-ra[2]%6)) ? "FF" : "00";
+
+
+  ctx.fillStyle = tmpstr;
+  ctx.font = '20px sans-serif';
+
+  // Draw the link chain
+  if(ra[12] > 1)
+    ctx.fillText('x'+ra[12]+' LINK', 5, 62)
+  // Draw the current level
+  if(ra[0] > 0)
+    ctx.fillText('LEVEL '+(ra[2]+1), view.sizex-100, view.sizey-15)
+  else
+    ctx.drawImage(jslix.getImg(0), (view.sizex/5), (2*view.sizey/5),
+                                  (3*view.sizex/5), (view.sizey/5))
+
   for(i = 0; i < rings.length; i++){
 
     if(rings[i] != 0){
@@ -341,40 +381,39 @@ export function render(canvas, ctx){
   }
 
   // This renders the timer bar, for what that is worth
-  ctx.fillStyle = 'gray'
-  ctx.fillRect(0, 0, view.sizex, 40)
   ctx.fillStyle = 'darkgray'
+  if(ra[2] >= 6)
+    ctx.fillStyle = (ra[2] >= 12 ? 'white' : 'yellow')
+  ctx.fillRect(0, 0, view.sizex, 40)
+  if(level >= 6)
+    ctx.fillText(level >= 12 ? 'MASTER' : 'LEGEND', view.sizex-100, 62)
+  if(ra[0] <= 0){
+    let tmp = (ra[12] == 0) ? "CLICK RINGS TO LINK" : "TAP SCREEN TO CLEAR"
+    let tmpx = ctx.measureText(tmp).width
+    ctx.fillText(tmp, ((view.sizex/2)-(tmpx/2)), view.sizey-15)
+  }
+  ctx.fillStyle = 'gray'
+  if(ra[2] >= 6)
+    ctx.fillStyle = (ra[2] >= 12 ? 'lightgray' : 'black')
   ctx.fillRect(5, 5, view.sizex-10, 30)
 
-  for(i = 1, j = 0; i <= ra[0]; i*=10, j++);
 
-  let tmpstr = '#'
-  tmpstr += ([1,2,3,0,-1,-2,-3].includes((6-ra[2])%6)) ? "FF" : "00";
-  tmpstr += ([2,-2].includes((6-ra[2])%6)) ? "A5" : ([3,4,-3,-4].includes((6-ra[2])%6)) ? "FF" : "00";
-  tmpstr += ([-5,5,0].includes((6-ra[2])%6)) ? "FF" : "00";
+  for(i = 1, j = 0; i <= ((ra[0] > 0) ? ra[0] : save); i*=10, j++);
+
   ctx.fillStyle = tmpstr
   ctx.fillRect(5, 5, ra[1]*(view.sizex-10)/ra[3], 30)
 
-  ctx.fillStyle = '#000000';
-  ctx.font = 'bold 30px sans-serif';
-  ctx.fillText(ra[0], (view.sizex/2)-8-2-(j*7), 31-2);
+  // Score Text
+  drawText(ctx, (ra[0] > 0) ? ra[0] : save, '30px sans-serif', 'white', 'black', (view.sizex/2)-8-(j*7), 31, 2)
 
-  ctx.fillStyle = '#000000';
-  ctx.font = 'bold 30px sans-serif';
-  ctx.fillText(ra[0], (view.sizex/2)-8+2-(j*7), 31+2);
+}
 
-  ctx.fillStyle = '#000000';
-  ctx.font = 'bold 30px sans-serif';
-  ctx.fillText(ra[0], (view.sizex/2)-8-2-(j*7), 31+2);
+function drawText(ctx, text, font, fg, bg, tx, ty, offset){
 
-  ctx.fillStyle = '#000000';
-  ctx.font = 'bold 30px sans-serif';
-  ctx.fillText(ra[0], (view.sizex/2)-8+2-(j*7), 31-2);
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = '30px sans-serif';
-  ctx.fillText(ra[0], (view.sizex/2)-8-(j*7), 31);
-
-
-
+  for(let h = 0; h < 5; h++){
+    ctx.fillStyle = (h < 4) ? bg : fg;
+    ctx.font = ((h < 4) ? "bold " : "") + font;
+    ctx.fillText(text, tx+((h%2)?-offset:offset*(h<4)?1:0),
+                       ty+((h<2)?-offset:offset*(h<4)?1:0));
+  }
 }
