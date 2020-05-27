@@ -12,6 +12,7 @@ let ctrig = 0
 let i = 0
 let j = 0
 
+let shake = 0
 let rotate = 0
 let save = 0
 let level = 0
@@ -25,12 +26,7 @@ let ey = []
 let es = []
 let ra = []
 
-let movey = 0
-let movex = 0
-let windx = 0
-let windy = 0
-let spawn = 0
-let windcount = 0
+let bg = "black"
 
 // +positive for active rings
 // -negative for selected rings
@@ -80,8 +76,10 @@ export function update(){
       ra.push(0, 500, 0, 1000, 0, 0)
       // [6]movex, [7]movey, [8]windx, [9]windy, [10]spawn, [11]windcount
       ra.push(0, 0, 0, 0, 0, 0)
-      // [12]link, [13]delay, [14]diff, [15]drain,
-      ra.push(0, 500, 0, 0)
+      // [12]link, [13]delay, [14]diff, [15]drain, [16]sreel, [17]treel
+      ra.push(0, 500, 0, 0, 0, 0)
+      // [18]srhelp, [19]trhelp, [20]chain, [21]bomb, [22]shake
+      ra.push(0, 0, 1, 0, 0)
 
       // Reset all the rings
       rings = []
@@ -91,6 +89,10 @@ export function update(){
       for(i = 0; i < 7; i++){
         createRing(i, i*60, i*40+75)
       }
+      //for(i = 0; i < 7; i++){
+        //createRing(i*7, (view.sizex/2)-175+(i*50), 75)
+        //createRing(38, (view.sizex/2)-175+(i*50), 75)
+      //}
     }
 
     rx[1] = rx[4] = (view.sizex/2)
@@ -111,11 +113,14 @@ export function update(){
   // Ring spawn sequence
   if(ra[0] > 0){
     ra[10] = parseInt((Math.random()*view.sizex)-(view.sizex/2))
+    let pup = parseInt(Math.random()*30)
+    if(pup > ra[2])//level
+      pup = 0
     if(ra[7] != 0 && ra[10] >= 0 && ra[10] < (view.sizex/40)){
-      createRing(parseInt(Math.random()*6)+1,
+      createRing(parseInt(Math.random()*6)+1+(6*(pup%7)),
                 ra[10]*40, (ra[7] > 0) ? -100 : view.sizey+100)
     }else if(ra[6] != 0 && ra[10] < 0 && ra[10] > -(view.sizey/40)){
-      createRing(parseInt(Math.random()*6)+1,
+      createRing(parseInt(Math.random()*6)+1+(6*(pup%7)),
                 (ra[6] > 0) ? -100 : view.sizex+100, -(ra[10]*40)+1)
     }
   }
@@ -134,11 +139,19 @@ export function update(){
         ra[6] += (ra[6] < ra[8]) ? 1 : -1
       if(ra[7] != ra[9])
         ra[7] += (ra[7] < ra[9]) ? 1 : -1
-      if(ra[13] < ra[1]){
-        //ra[15] += 1
-        ra[15] = ra[2]+1
+      if(ra[13] < ra[1] && ra[15] < (ra[2]+1)){
+        ra[15] += 1
       }
       ra[13] -= ra[14]
+      if(ra[16] > 0){
+        ra[0] += 10
+        ra[16] -= 10
+      }
+      if(ra[17] > 0){
+        ra[1] += 10
+        ra[13] += 10
+        ra[17] -= 10
+      }
     }
     ra[13] -= ra[12]
     if(ra[13] < ra[1]){
@@ -150,6 +163,9 @@ export function update(){
 	     ra[8] = ra[9] = 0;
        ra[14] += 1
 	  }
+    // Show the placard
+    if(ra[2] > level)
+      level = ra[2]
   }
 
   // This increases the time bar every level
@@ -168,14 +184,29 @@ export function update(){
     // If it is a real ring
     if (rings[i] > 0){
       // We will react a certain way if a ring is selected
-      if(atrig == 1 && input.MOUSEX > rx[i]-(5*rwidth/3) &&
-                  input.MOUSEX < rx[i]+(5*rwidth/3) &&
-                  input.MOUSEY > ry[i]-(5*rwidth/3) &&
-                  input.MOUSEY < ry[i]+(5*rwidth/3)){
+      // Old mean selector radius (5*rwidth/3)
+      if(atrig == 1 && input.MOUSEX > rx[i]-(2*rwidth) &&
+                  input.MOUSEX < rx[i]+(2*rwidth) &&
+                  input.MOUSEY > ry[i]-(2*rwidth) &&
+                  input.MOUSEY < ry[i]+(2*rwidth)){
           //change ring to selected
-          //if(!music.isSongOn())
-            //music.loopSong(rings[i]%2)
-            //music.playSong(0)
+          if(ra[18] > 0)
+            ra[16] += (10+10*parseInt(ra[2]/10))*ra[18]
+          if(ra[19] > 0)
+            ra[17] += (10+10*parseInt(ra[2]/10))*ra[19]
+
+          if(rings[i] > 36){
+            ra[20] *= 3
+          }else if(rings[i] > 24){
+            ra[21] = (rings[i] > 30) ?-1:1
+            ra[(rings[i]>30)?17:16] *= 2
+          }else if(rings[i] > 18){
+            ra[20] *= 2
+          }else if(rings[i] > 6){
+            ra[(rings[i]>12)?17:16] += 100+10*ra[14]
+            ra[(rings[i]>12)?19:18] += 1
+          }
+
           ra[4] += ((rings[i]-1)%6+1)*10;
 	        ra[5] += (6-((rings[i]-1)%6))*10;
           ra[13] += ra[5]+(ra[12]*10)
@@ -191,12 +222,15 @@ export function update(){
       ry[i] += ra[7]
     }else if(rings[i] < 0){
       if(ctrig == 1){
-        ra[0] += ra[4]
-        ra[1] += ra[5]
+        if(ra[21] >= 0)
+          ra[0] += (ra[4]+((ra[21]==0)?0:ra[5]))*ra[20]
+        if(ra[21] <= 0)
+          ra[1] += (ra[5]+((ra[21]==0)?0:ra[4]))*ra[20]
 
         ra[13] = ra[1]
 
-        ra[4] = ra[5] = ra[12] = ra[15] = 0
+        ra[20] = 1
+        ra[4] = ra[5] = ra[12] = ra[15] = ra[18] = ra[19] = 0
         createExp(rings[i], rx[i], ry[i])
         rings[i] = 0;
       }
@@ -208,16 +242,36 @@ export function update(){
   if(atrig == 1 && miss){
     for(i = 0; i < rings.length; i++){
       if(rings[i] < 0){
-        ra[0] += ra[4]
-        ra[1] += ra[5]
+        if(ra[21] >= 0)
+          ra[0] += (ra[4]+((ra[21]==0)?0:ra[5]))*ra[20]
+        if(ra[21] <= 0)
+          ra[1] += (ra[5]+((ra[21]==0)?0:ra[4]))*ra[20]
 
         ra[13] = ra[1]
+        ra[20] = 1
+        ra[4] = ra[5] = ra[12] = ra[15] = ra[18] = ra[19] = 0
 
-        ra[4] = ra[5] = ra[12] = ra[15] = 0
         createExp(rings[i], rx[i], ry[i])
         rings[i] = 0;
       }
     }
+  }
+
+  if(ra[21] != 0 && ((atrig == 1 && miss) || ctrig)){
+    for(i = 0; i < rings.length; i++){
+      if(rings[i] > 0){
+        if(ra[21] > 0)
+          ra[0] += 70
+        else{
+          ra[1] += 70
+          ra[13] += 70
+        }
+        ra[22] += 1
+        createExp(-rings[i], rx[i], ry[i])
+        rings[i] = 0
+      }
+    }
+    ra[21] = 0
   }
 
   // Lose sequence
@@ -270,7 +324,7 @@ function createExp(num, x, y){
 export function render(canvas, ctx){
 
   // Make the background black
-  ctx.fillStyle = "black"
+  ctx.fillStyle = bg
   ctx.fillRect(0, 0, view.sizex, view.sizey)
 
   // Let's make an explosion wherever a user clicks
@@ -286,7 +340,7 @@ export function render(canvas, ctx){
         ctx.lineWidth = 5;
         ctx.beginPath();
         ctx.arc(ex[i]+(([4, 5, 7].includes(j) ? es[i] : -es[i])*([0, 2].includes(j) ? 0 : 1)),
-                ey[i]+(([2, 3, 7].includes(j) ? es[i] : -es[i])*([4, 6].includes(j) ? 0 : 1)),
+                ey[i]+shake+(([2, 3, 7].includes(j) ? es[i] : -es[i])*([4, 6].includes(j) ? 0 : 1)),
                 2, 0, 2 * Math.PI);
         ctx.stroke();
       }
@@ -319,6 +373,27 @@ export function render(canvas, ctx){
     ctx.drawImage(jslix.getImg(0), (view.sizex/5), (2*view.sizey/5),
                                   (3*view.sizex/5), (view.sizey/5))
 
+  if(ra[20] > 1){
+    let tmp = "x"+ra[20]+" CHAIN"
+    let tmpx = ctx.measureText(tmp).width
+    ctx.fillText(tmp, ((view.sizex/2)-(tmpx/2)), view.sizey-45)
+  }
+
+  for(i = 0; i < 2; i++){
+    ctx.fillStyle = (i==0) ? 'green' : 'cyan'
+    if((i==0&&ra[16]>0) || (i==1&&ra[17]>0)){
+      ctx.font = '10px sans-serif'
+      ctx.fillText((i==0)?"SCOREREEL":"TIMEREEL", 5, 62+30+(30*i))
+      ctx.font = '20px sans-serif'
+      ctx.fillText('+'+ra[16+i], 5, 62+20+(30*i))
+    }
+    if((i==0&&ra[21]>0) || (i==1&&ra[21]<0)){
+      let tmp = (i==0)?"SCOREBOMB":"TIMECLEAR"
+      let tmpx = ctx.measureText(tmp).width
+      ctx.fillText(tmp, ((view.sizex/2)-(tmpx/2)), view.sizey-27)
+    }
+  }
+
   for(i = 0; i < rings.length; i++){
 
     if(rings[i] != 0){
@@ -349,33 +424,137 @@ export function render(canvas, ctx){
 
       // This determines the selectability of the rings
       if(rings[i] < 0){
-        ctx.strokeStyle = 'darkgray'
-        ctx.lineWidth = 4
-        ctx.beginPath();
-        ctx.moveTo(rx[i]-(5*rwidth/3)+(5*rwidth/3), ry[i]-(5*rwidth/3));
-        ctx.lineTo(rx[i]-(5*rwidth/3), ry[i]-(5*rwidth/3));
-        ctx.lineTo(rx[i]-(5*rwidth/3), ry[i]-(5*rwidth/3)+(5*rwidth/3));
-        ctx.stroke();
+        for(j = 0; j < 2; j++){
+          ctx.strokeStyle = (j==0) ? 'darkgray' : 'gray'
+          ctx.lineWidth = 4-(2*j)
+          ctx.beginPath();
+          ctx.moveTo(rx[i]-(5*rwidth/3)+(5*rwidth/3), ry[i]-(5*rwidth/3));
+          ctx.lineTo(rx[i]-(5*rwidth/3), ry[i]-(5*rwidth/3));
+          ctx.lineTo(rx[i]-(5*rwidth/3), ry[i]-(5*rwidth/3)+(5*rwidth/3));
+          ctx.stroke();
 
-        ctx.beginPath();
-        ctx.moveTo(rx[i]+(5*rwidth/3)-(5*rwidth/3), ry[i]+(5*rwidth/3));
-        ctx.lineTo(rx[i]+(5*rwidth/3), ry[i]+(5*rwidth/3));
-        ctx.lineTo(rx[i]+(5*rwidth/3), ry[i]+(5*rwidth/3)-(5*rwidth/3));
-        ctx.stroke()
-
-        ctx.strokeStyle = 'gray'
-        ctx.lineWidth = 2
-        ctx.beginPath();
-        ctx.moveTo(rx[i]-(5*rwidth/3)+(5*rwidth/3), ry[i]-(5*rwidth/3));
-        ctx.lineTo(rx[i]-(5*rwidth/3), ry[i]-(5*rwidth/3));
-        ctx.lineTo(rx[i]-(5*rwidth/3), ry[i]-(5*rwidth/3)+(5*rwidth/3));
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(rx[i]+(5*rwidth/3)-(5*rwidth/3), ry[i]+(5*rwidth/3));
-        ctx.lineTo(rx[i]+(5*rwidth/3), ry[i]+(5*rwidth/3));
-        ctx.lineTo(rx[i]+(5*rwidth/3), ry[i]+(5*rwidth/3)-(5*rwidth/3));
-        ctx.stroke()
+          ctx.beginPath();
+          ctx.moveTo(rx[i]+(5*rwidth/3)-(5*rwidth/3), ry[i]+(5*rwidth/3));
+          ctx.lineTo(rx[i]+(5*rwidth/3), ry[i]+(5*rwidth/3));
+          ctx.lineTo(rx[i]+(5*rwidth/3), ry[i]+(5*rwidth/3)-(5*rwidth/3));
+          ctx.stroke()
+        }
+      }else if(rings[i] > 6){
+        if(rings[i] > 36){
+          //x3
+          for(j = 0; j < 2; j++){
+            ctx.strokeStyle = (j==0) ? "black" : "white"
+            ctx.lineWidth = 4-(3*j)
+            ctx.beginPath();
+            ctx.moveTo(rx[i]-(5-j),ry[i]-(3-j))
+            ctx.lineTo(rx[i]-(2-j),ry[i]+(3-j))
+            ctx.lineTo(rx[i]-(5-j),ry[i]-(3-j))
+            ctx.moveTo(rx[i]-(5-j),ry[i]+(3-j))
+            ctx.lineTo(rx[i]-(2-j),ry[i]-(3-j))
+            ctx.lineTo(rx[i]-(5-j),ry[i]+(3-j))
+            ctx.stroke()
+            ctx.lineWidth = 4-(2*j)
+            ctx.beginPath();
+            ctx.moveTo(rx[i]-(2-j),ry[i]-4)
+            ctx.lineTo(rx[i]+4,ry[i]-4)
+            ctx.lineTo(rx[i]+1,ry[i]+0)
+            ctx.lineTo(rx[i]+4,ry[i]+2)
+            ctx.lineTo(rx[i]-(2-j),ry[i]+4)
+            ctx.stroke()
+          }
+        }else if(rings[i] > 30){
+          //timeclear
+          for(j = 0; j < 2; j++){
+            ctx.strokeStyle = (j==0) ? "black" : "white"
+            ctx.lineWidth = 4-(2*j)
+            ctx.beginPath();
+            ctx.moveTo(rx[i]-4,ry[i]-3)
+            ctx.lineTo(rx[i]-4,ry[i]+3)
+            ctx.lineTo(rx[i]-1,ry[i])
+            ctx.lineTo(rx[i]-4,ry[i]-3)
+            ctx.lineTo(rx[i]-4,ry[i]+3)
+            ctx.moveTo(rx[i]+4,ry[i]+3)
+            ctx.lineTo(rx[i]+4,ry[i]-3)
+            ctx.lineTo(rx[i]+1,ry[i])
+            ctx.lineTo(rx[i]+4,ry[i]+3)
+            ctx.lineTo(rx[i]+4,ry[i]-3)
+            ctx.stroke()
+          }
+        }else if(rings[i] > 24){
+          //scorebomb
+          for(j = 0; j < 2; j++){
+            ctx.strokeStyle = (j==0) ? "black" : "white"
+            ctx.lineWidth = 4-(2*j)
+            ctx.beginPath();
+            ctx.moveTo(rx[i]-4,ry[i]-4)
+            ctx.lineTo(rx[i]-2,ry[i]-4)
+            ctx.lineTo(rx[i]-4,ry[i]-2)
+            ctx.lineTo(rx[i]-4,ry[i]-4)
+            ctx.moveTo(rx[i]+4,ry[i]-4)
+            ctx.lineTo(rx[i]+2,ry[i]-4)
+            ctx.lineTo(rx[i]+4,ry[i]-2)
+            ctx.lineTo(rx[i]+4,ry[i]-4)
+            ctx.moveTo(rx[i]-4,ry[i]+4)
+            ctx.lineTo(rx[i]-2,ry[i]+4)
+            ctx.lineTo(rx[i]-4,ry[i]+2)
+            ctx.lineTo(rx[i]-4,ry[i]+4)
+            ctx.moveTo(rx[i]+4,ry[i]+4)
+            ctx.lineTo(rx[i]+2,ry[i]+4)
+            ctx.lineTo(rx[i]+4,ry[i]+2)
+            ctx.lineTo(rx[i]+4,ry[i]+4)
+            ctx.stroke()
+          }
+        }else if(rings[i] > 18){
+          //x2
+          for(j = 0; j < 2; j++){
+            ctx.strokeStyle = (j==0) ? "black" : "white"
+            ctx.lineWidth = 4-(3*j)
+            ctx.beginPath();
+            ctx.moveTo(rx[i]-(5-j),ry[i]-(3-j))
+            ctx.lineTo(rx[i]-(2-j),ry[i]+(3-j))
+            ctx.lineTo(rx[i]-(5-j),ry[i]-(3-j))
+            ctx.moveTo(rx[i]-(5-j),ry[i]+(3-j))
+            ctx.lineTo(rx[i]-(2-j),ry[i]-(3-j))
+            ctx.lineTo(rx[i]-(5-j),ry[i]+(3-j))
+            ctx.stroke()
+            ctx.lineWidth = 4-(2*j)
+            ctx.beginPath();
+            ctx.moveTo(rx[i]-(2-j),ry[i]-4)
+            ctx.lineTo(rx[i]+2,ry[i]-4)
+            ctx.lineTo(rx[i]+4,ry[i]-2)
+            ctx.lineTo(rx[i]-1,ry[i]+4)
+            ctx.lineTo(rx[i]+(5-j),ry[i]+4)
+            ctx.stroke()
+          }
+        }else if(rings[i] > 12){
+          //timereel
+          for(j = 0; j < 2; j++){
+            ctx.strokeStyle = (j==0) ? "black" : "white"
+            ctx.lineWidth = 4-(2*j)
+            ctx.beginPath();
+            ctx.moveTo(rx[i]-4, ry[i]-4)
+            ctx.lineTo(rx[i]+4,ry[i]-4)
+            ctx.lineTo(rx[i]-4, ry[i]+4)
+            ctx.lineTo(rx[i]+4,ry[i]+4)
+            ctx.lineTo(rx[i]-4, ry[i]-4)
+            ctx.lineTo(rx[i]+4,ry[i]-4)
+            ctx.stroke()
+          }
+        }else if(rings[i] > 6){
+          //scorereel
+          for(j = 0; j < 2; j++){
+            ctx.strokeStyle = (j==0) ? "black" : "white"
+            ctx.lineWidth = 4-(2*j)
+            ctx.beginPath();
+            ctx.moveTo(rx[i], ry[i]-4)
+            ctx.lineTo(rx[i]+4,ry[i])
+            ctx.lineTo(rx[i], ry[i]+4)
+            ctx.lineTo(rx[i]-4,ry[i])
+            ctx.lineTo(rx[i], ry[i]-4)
+            ctx.lineTo(rx[i]+4,ry[i])
+            ctx.stroke()
+          }
+        }
       }
     }
   }
@@ -384,13 +563,21 @@ export function render(canvas, ctx){
   ctx.fillStyle = 'darkgray'
   if(ra[2] >= 6)
     ctx.fillStyle = (ra[2] >= 12 ? 'white' : 'yellow')
-  ctx.fillRect(0, 0, view.sizex, 40)
+  shake = 0
+  if(ra[22]>0){
+    shake = ra[22]/(ra[22]%2==0)?2:-2
+    ra[22] -= 1
+  }
+
+  ctx.fillRect(0, 0, view.sizex, 40+shake)
+  if(ra[22]>0)
+    ra[22] -= 1
   if(level >= 6)
-    ctx.fillText(level >= 12 ? 'MASTER' : 'LEGEND', view.sizex-100, 62)
+    ctx.fillText(level >= 12 ? 'MASTER' : 'LEGEND', view.sizex-100, 62+shake)
   if(ra[0] <= 0){
     let tmp = (ra[12] == 0) ? "CLICK RINGS TO LINK" : "TAP SCREEN TO CLEAR"
     let tmpx = ctx.measureText(tmp).width
-    ctx.fillText(tmp, ((view.sizex/2)-(tmpx/2)), view.sizey-15)
+    ctx.fillText(tmp, ((view.sizex/2)-(tmpx/2)), view.sizey-8)
   }
   ctx.fillStyle = 'gray'
   if(ra[2] >= 6)
@@ -404,7 +591,8 @@ export function render(canvas, ctx){
   ctx.fillRect(5, 5, ra[1]*(view.sizex-10)/ra[3], 30)
 
   // Score Text
-  drawText(ctx, (ra[0] > 0) ? ra[0] : save, '30px sans-serif', 'white', 'black', (view.sizex/2)-8-(j*7), 31, 2)
+  drawText(ctx, (ra[0] > 0) ? ra[0] : save, '30px sans-serif', 'white', 'black',
+            (view.sizex/2)-8-(j*7), 31+shake, 2)
 
 }
 
