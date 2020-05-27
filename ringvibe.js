@@ -191,15 +191,24 @@ export function update(){
                   input.MOUSEY < ry[i]+(2*rwidth)){
           //change ring to selected
           if(ra[18] > 0)
-            ra[16] += (10+10*parseInt(ra[2]/10))*ra[18]
+            ra[16] += (10+10*parseInt(ra[14]/10))*ra[18]
           if(ra[19] > 0)
-            ra[17] += (10+10*parseInt(ra[2]/10))*ra[19]
+            ra[17] += (10+10*parseInt(ra[14]/10))*ra[19]
 
           if(rings[i] > 36){
             ra[20] *= 3
           }else if(rings[i] > 24){
             ra[21] = (rings[i] > 30) ?-1:1
-            ra[(rings[i]>30)?17:16] *= 2
+            // Changing this cause pointless in higher levels
+            //ra[(rings[i]>30)?17:16] *= 2
+            // Instead, you just get free points
+            if(rings[i]>30){
+              ra[1] += ra[17]
+              ra[13] += ra[17]
+            }else{
+              ra[0] += ra[16]
+            }
+
           }else if(rings[i] > 18){
             ra[20] *= 2
           }else if(rings[i] > 6){
@@ -368,7 +377,7 @@ export function render(canvas, ctx){
     ctx.fillText('x'+ra[12]+' LINK', 5, 62)
   // Draw the current level
   if(ra[0] > 0)
-    ctx.fillText('LEVEL '+(ra[2]+1), view.sizex-100, view.sizey-15)
+    ctx.fillText('LEVEL '+(ra[2]+1), view.sizex-100, view.sizey-15+shake)
   else
     ctx.drawImage(jslix.getImg(0), (view.sizex/5), (2*view.sizey/5),
                                   (3*view.sizex/5), (view.sizey/5))
@@ -383,9 +392,9 @@ export function render(canvas, ctx){
     ctx.fillStyle = (i==0) ? 'green' : 'cyan'
     if((i==0&&ra[16]>0) || (i==1&&ra[17]>0)){
       ctx.font = '10px sans-serif'
-      ctx.fillText((i==0)?"SCOREREEL":"TIMEREEL", 5, 62+30+(30*i))
+      ctx.fillText((i==0)?"SCOREREEL":"TIMEREEL", 5, 62+30+(30*i)+shake)
       ctx.font = '20px sans-serif'
-      ctx.fillText('+'+ra[16+i], 5, 62+20+(30*i))
+      ctx.fillText('+'+ra[16+i], 5, 62+20+(30*i)+shake)
     }
     if((i==0&&ra[21]>0) || (i==1&&ra[21]<0)){
       let tmp = (i==0)?"SCOREBOMB":"TIMECLEAR"
