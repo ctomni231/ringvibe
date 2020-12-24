@@ -132,17 +132,16 @@ export function update(){
     ra[11] = 0
   }
 
-  // Let's do some maintenance
+  // Let's do some maintenance - difficulty increased a little
   if(ra[0] > 0){
     if(ra[11]++%25 == 0){
       if(ra[6] != ra[8])
         ra[6] += (ra[6] < ra[8]) ? 1 : -1
       if(ra[7] != ra[9])
         ra[7] += (ra[7] < ra[9]) ? 1 : -1
-      if(ra[13] < ra[1] && ra[15] < (ra[2]+1)){
+      if(ra[13] < ra[1] && ra[15] < (ra[14]+1)){//(ra[2]+1)){
         ra[15] += 1
       }
-      ra[13] -= ra[14]
       if(ra[16] > 0){
         ra[0] += 10
         ra[16] -= 10
@@ -152,6 +151,7 @@ export function update(){
         ra[13] += 10
         ra[17] -= 10
       }
+      ra[13] -= ra[14]
     }
     ra[13] -= ra[12]
     if(ra[13] < ra[1]){
@@ -205,10 +205,11 @@ export function update(){
             if(rings[i]>30){
               ra[1] += ra[17]
               ra[13] += ra[17]
+            //  ra[17] = 0 //Make the clears and bombs less cheap
             }else{
               ra[0] += ra[16]
+            //  r[16] = 0//Make the clears and bombs less cheap
             }
-
           }else if(rings[i] > 18){
             ra[20] *= 2
           }else if(rings[i] > 6){
