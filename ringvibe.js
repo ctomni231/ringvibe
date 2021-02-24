@@ -583,7 +583,7 @@ export function render(canvas, ctx){
   if(ra[22]>0)
     ra[22] -= 1
   if(level >= 6)
-    ctx.fillText(level >= 12 ? 'MASTER' : 'LEGEND', view.sizex-100, 62+shake)
+    ctx.fillText(level >= 12 ? 'LEGEND' : 'MASTER', view.sizex-100, 62+shake)
   if(ra[0] <= 0){
     let tmp = (ra[12] == 0) ? "CLICK RINGS TO LINK" : "TAP SCREEN TO CLEAR"
     let tmpx = ctx.measureText(tmp).width
