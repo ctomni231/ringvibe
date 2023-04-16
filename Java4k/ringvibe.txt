@@ -1,0 +1,269 @@
+---------------
+Black Blob Code
+---------------
+
+You can take a color and prevent the user from clicking on a color on an image.
+It is kinda cool, because you don't need hitboxes with a system like this.
+
+
+if(mx >= 0 && mx <= 800 && my >= 0 && my <= 600){
+	if(image.getRGB(mx, my) == Color.BLACK.getRGB()){
+		g.drawString("COOL", 400, 600);
+	}
+}
+
+-----------
+Letter Code
+-----------
+
+This code turns integers into pictures in a 4x8 plane. You can also alter the code to
+turn integers into whatever planes you need to make images. 
+The number, positionX, positionY, and size in pixels
+
+private void draw(int nm, int px, int py, int sz){
+	for(int i = 0; i < 32; i++){
+		if((int)((nm >>> i) & 0x00000001) == 1)
+			g.fill3DRect(px+(i%4)*sz, py+(i/4)*sz, sz, sz, true);
+	}
+}
+
+------------------------------
+Dot Letters, Numbers & Symbols
+------------------------------
+
+"A" - 630678, 630687
+"B" - 497559
+"C" - 921886, 987423
+"D" - 498071
+"E" - 988959, 991007
+"F" - 71455
+"G" - 433438, (1023263)
+"H" - 630681
+"I" - 467495
+"J" - 480334, 152654
+"K" - 611161
+"L" - 987409
+"M" - 630231
+"N" - 630201
+"O" - 432534
+"P" - 71575
+"Q" - 678294
+"R" - 628631
+"S" - 493086
+"T" - 139823, 279631, 279630
+"U" - 956825, (1022361), [480597]
+"V" - 154009, [152917]
+"W" - 965529
+"X" - 628377
+"Y" - 495257
+"Z" - 992399
+"0" - 432534
+"1" - 934982
+"2" - 992406, 992415
+"3" - 495239, (1019535)
+"4" - 561049
+"5" - 495391
+"6" - 433950, (1023761)
+"7" - 559247
+"8" - 431766 
+"9" - 495254
+"-" - 3840
+
+-----------
+Code Letter
+-----------
+
+//private int[] na = new int[]{43,93,99,49,56,49,43,55,43,49, 0};
+//private int[] nb = new int[]{25,49,24,52,10,53,39,92,17,52,38};
+//private int[] nc = new int[]{34,82, 6,39,49,91,50,47,66,54,40};
+//private int[] la = new int[]{63,49,92,49,98, 7,43,63,46,48,61,98,63,63,43, 7,67,62,49,27,95,15,96,62,49,99};
+//private int[] lb = new int[]{ 6,75,18,80,89,14,34, 6,74, 3,11,74, 2, 2,25,15,82,86,30,96,68,40,55,83,52,23};
+//private int[] lc = new int[]{78,59,86,71,59,55,38,81,95,34,61, 9,31, 1,34,75,94,31,86,30,25, 9,29,77,57,99};
+
+-------
+Symbols
+-------
+
+Score Full:
+"147783368", rx[i]+20-7, ry[i]+20-7, -2
+"1274640", rx[i]+20+1, ry[i]+20-7, -2
+
+Score Hallow:
+"147207880", rx[i]+20-6, ry[i]+20-7, -2
+"1270544", rx[i]+20+2, ry[i]+20-7, -2
+
+Time Hallow:
+"16174191", rx[i]+20-7, ry[i]+20-7, -2
+"7541047", rx[i]+20+1, ry[i]+20-7, -2
+
+TimeClear Full:
+draw("101937942", rx[i]+20-6, ry[i]+20-6, -2);
+draw("54949443", rx[i]+20+2, ry[i]+20-6, -2);
+
+TimeClear Second
+draw("1274640", rx[i]+20-6, ry[i]+20-6, -2);
+draw("4617792", rx[i]+20+2, ry[i]+20-6, -2);
+
+
+//if(((ra[i]-1)%6+1) == 0)
+            			//	bg = new Color(bg.getRed()+10, bg.getGreen(), bg.getBlue());
+            			//if(((ra[i]-1)%6+1) == 1)
+            			//	bg = new Color(bg.getRed(), bg.getGreen()+10, bg.getBlue()+10);
+            			//if(((ra[i]-1)%6+1) == 2)
+            			//	bg = new Color(bg.getRed()+10, bg.getGreen()+10, bg.getBlue());
+            			//if(((ra[i]-1)%6+1) == 3)
+            			//	bg = new Color(bg.getRed(), bg.getGreen()+10, bg.getBlue());
+            			//if(((ra[i]-1)%6+1) == 4)
+            			//	bg = new Color(bg.getRed(), bg.getGreen(), bg.getBlue()+10);
+            			//if(((ra[i]-1)%6+1) == 5)
+            			//	bg = new Color(bg.getRed()+10, bg.getGreen(), bg.getBlue()+10);
+
+------------------
+Powerups Full List
+------------------
+
+-------
+In Game
+-------
+
+Time: Hourglass Shaped Icon
++100 points to Time [Effect +]
+
+Score: Diamond Shape Icon
++100 points to score [Effect +]
+
+x2 Multiplier: x2 Icon
+Doubles Time & Score Value of all Chained Rings [Effect+ : Chain]
+
+Time Clear: Inverse Hourglass Icon
+Maximize the time value of rings, but gives no score [Chain]
+
+Score Clear: Inverse Diamond Icon
+Maximize the score value of rings, but gives no time [Chain]
+
+Wind Change: Cloud Shaped Icon
+Changes the direction of the wind
+
+Time Reel: Hourglass with a small Plus sign
+Adds +10 to time for each ring you chain [Effect+ : Chain+]
+
+Score Reel: Diamond with a small Plus sign
+Adds +10 to score for each ring you chain [Effect+ : Chain+]
+
+x3 Multiplier: x3 Icon
+Triples Time & Score Value of all Chained Rings [Effect+ : Chain]
+
+Time Incest: Skull Icon with small Score (Broken)
+-100 score for +100 time for each ring you chain [Effect+ : Chain+]
+
+Score Incest: Skull Icon with small Time
+-100 time for +100 score for each ring you chain [Effect+ : Chain+]
+
+Swap: Recycle icon
+Swaps the score and time value for all rings
+
+20% Time: 20% icon with small Hourglass (Broken)
+Adds 20% Time to the Time bar
+
+30% Time: 30% icon with small Hourglass (Broken)
+Adds 30% Time to the Time Bar
+
+------
+Extras
+------
+
+Yield: Backward Triangle icon
+Stops all rings on the screen until you explode the chain [Chain]
+
+Bomb: Circle Icon
+Explodes all non-selected rings displayed on the screen and adds them to score and time
+
+Olden Time: Square Icon
+Alternates the rings between color and black/white.
+
+Wind Fast: Cloud Icon with a plus sign
+Speeds up the current wind
+
+Wind Slow: Cloud Icon with a minus sign
+Slows down the current wind
+
+Penalty: Flag Icon
+Deselects all selected rings
+
+Skull: Skull Icon
+Makes cursor invisible
+
+Nightmare: Skull Icon with Plus sign
+Makes cursor invisible and can't select rings
+
+% Reel: Percent Icon with a Plus sign
+Adds 1% of time for each ring clicked
+
+Chance: Question Mark Icon
+Each ring chained gives you a random value of score and time
+
+X Factor: X Icon
+Multiplies the score and time by each ring you click
+
+Timebomb: Circle Icon with a small hourglass icon
+Explodes all visible unselected rings on screen and adds them to time
+
+Scorebomb: Circle Icon with a small diamond icon
+Explodes all visible unselected rings on screen and adds them to score 
+
+-------------
+Natural Click
+-------------
+
+Hold cursor over ring for a short time:
+Select all rings of that color in the screen
+
+--------
+Rankings
+--------
+
+0-9) Blind Bat
+10-19) Hairy Rat
+20-29) Silly Monkey
+30-39) Killer Kangaroo
+40-49) Flying Antelope
+50-59) Keen Owl
+60-69) Dashing Rabbit
+70-79) Sharp Shark
+80-89) Angry Viper
+90-99) Bald Eagle
+100) Shining Star
+
+----------------
+Revised Powerups
+----------------
+
+Every Powerup should chain for greater effect, but I'll only put 6 in the game.
+
+scoreClear: Inverse Diamond
+One time: blow up of all unselected rings on screen, adds them to score.
+Each ring chained: No time value, full score value
+
+TimeClear: Inverse Hourglass
+One time: blow up of all unselected rings on screen, adds them to time.
+Each ring chained: No score value, full time value
+
+x2 Multiplier: x2 Symbol
+Each ring in the chain value is multiplied by 2
+
+ScoreReel: Diamond
+One time value of score when clicked (+100)
+Each ring clicked gives a fraction more score (+10)
+
+TimeReel: Hourglass
+One time value of time when clicked (+100)
+Each ring clicked gives a fraction more time (+10)
+
+x3 Multiplier: x3 Symbol
+Each ring in the chain value is multiplied by 3
+
+------------------------
+Highest Scores and Ranks
+------------------------
+
+GP - 137400 (Master)
